@@ -1,0 +1,88 @@
+name: MERN App CI/CD
+
+# Trigger the workflow on push events to the main branch
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+
+    steps:
+      # Step 1: Check out the repository code
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Step 2: Login to Docker Hub
+      # This allows us to push the built images to your Docker Hub repository.
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # Step 3: Build and push the backend image
+      - name: Build and Push Server Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./server
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/mern-server:latest
+
+      # Step 4: Build and push the frontend image
+      - name: Build and Push Client Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./client
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/mern-client:latest
+      
+      # Step 5: Deploy to AWS EC2
+      # This step securely connects to your EC2 instance via SSH and runs the deployment commands.
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST_DNS }}
+          username: ${{ secrets.EC2_USERNAME }} # e.g., 'ubuntu' or 'ec2-user'
+          key: ${{ secrets.EC2_SSH_KEY }} # Your private SSH key
+          script: |
+            # Navigate to the app directory
+            cd /home/ubuntu/mern-app 
+            
+            # Pass secrets as environment variables for Docker Compose
+            # This creates a .env file on the EC2 instance.
+            echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" > .env
+
+            # Pull the latest images from Docker Hub
+            docker-compose pull
+            
+            # Stop and remove old containers, then start new ones in detached mode
+            docker-compose up -d --force-recreate
+            
+            # Optional: Clean up dangling images to save space
+            docker image prune -f
+
+      # Step 6 (Bonus): Send Slack Notification
+      - name: Slack Notification on Success
+        if: success()
+        uses: rtCamp/action-slack-notify@v2.2.0
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_USERNAME: "CI/CD Bot"
+          SLACK_ICON_EMOJI: ":rocket:"
+          SLACK_COLOR: "good"
+          SLACK_TITLE: "Deployment Successful! :white_check_mark:"
+          SLACK_MESSAGE: "The latest version of the MERN app has been deployed to production."
+
+      - name: Slack Notification on Failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2.2.0
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_USERNAME: "CI/CD Bot"
+          SLACK_ICON_EMOJI: ":x:"
+          SLACK_COLOR: "danger"
+          SLACK_TITLE: "Deployment Failed! :red_circle:"
+          SLACK_MESSAGE: "The deployment failed. Please check the GitHub Actions logs for details."
