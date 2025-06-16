@@ -1,34 +1,94 @@
-version: '3.8'
+name: MERN App CI/CD
 
-services:
-  # The backend Node.js service
-  server:
-    image: jaysisharma/mern-server:latest  
-    container_name: mern_server
-    restart: unless-stopped
-    environment:
-      # Pass environment variables to the container.
-      # Use a .env file at the root of your project for these values.
-      - ATLAS_URI=${ATLAS_URI}
-    networks:
-      - mern-app-network
+on:
+  push:
+    branches:
+      - main
 
-  # The frontend React/NGINX service
-  client:
-    image: jaysisharma/mern-client:latest
-    container_name: mern_client
-    restart: unless-stopped
-    ports:
-      # Map port 80 of the host to port 80 of the container.
-      # This makes the frontend accessible via the EC2 instance's IP address.
-      - "80:80"
-    depends_on:
-      - server # Ensures the backend starts before the frontend
-    networks:
-      - mern-app-network
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
-# Define the network that allows containers to communicate with each other.
-networks:
-  mern-app-network:
-    driver: bridge
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build and Push Server Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./server
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/mern-server:latest
+
+      - name: Build and Push Client Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./client
+          push: true
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/mern-client:latest
+
+      - name: 🚀 Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST_DNS }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "🔗 Connecting to EC2 instance..."
+            cd /home/ubuntu/
+
+            echo "🧹 Removing old Exercise_Tracker directory..."
+            rm -rf Exercise_Tracker
+
+            echo "⬇️ Cloning Exercise_Tracker from GitHub..."
+            git clone https://github.com/jaysisharma/Exercise_Tracker.git
+
+            cd Exercise_Tracker
+
+            echo "🔐 Writing .env file with ATLAS_URI..."
+            echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" > .env
+
+            echo "🛑 Stopping and removing containers, images, volumes, and orphans..."
+            docker-compose down --rmi all --volumes --remove-orphans
+
+            echo "🐳 Logging in to Docker Hub..."
+            echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+            echo "📦 Pulling latest Docker images..."
+            docker-compose pull
+
+            echo "🚀 Rebuilding and restarting containers..."
+            docker-compose up -d --force-recreate
+
+            echo "🧼 Pruning unused Docker images to save space..."
+            docker image prune -f
+
+            echo "✅ Deployment completed successfully."
+
+      - name: Slack Notification on Success
+        if: success()
+        uses: rtCamp/action-slack-notify@v2.2.0
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_USERNAME: "CI/CD Bot"
+          SLACK_ICON_EMOJI: ":rocket:"
+          SLACK_COLOR: "good"
+          SLACK_TITLE: "Deployment Successful! :white_check_mark:"
+          SLACK_MESSAGE: "The latest version of the MERN app has been deployed to production."
+
+      - name: Slack Notification on Failure
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2.2.0
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_USERNAME: "CI/CD Bot"
+          SLACK_ICON_EMOJI: ":x:"
+          SLACK_COLOR: "danger"
+          SLACK_TITLE: "Deployment Failed! :red_circle:"
+          SLACK_MESSAGE: "The deployment failed. Please check the GitHub Actions logs for details."
