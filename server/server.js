@@ -17,6 +17,7 @@ connection.once('open', () => {
   console.log("MongoDB database connection established successfully");
 })
 
+// Import the routers for handling requests
 const exercisesRouter = require('./routes/exercises');
 const usersRouter = require('./routes/users');
 
