@@ -1,6 +1,5 @@
 name: MERN App CI/CD
 
-# Trigger the workflow on push events to the main branch
 on:
   push:
     branches:
@@ -8,22 +7,18 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+    runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the repository code
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Step 2: Login to Docker Hub
-      # This allows us to push the built images to your Docker Hub repository.
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # Step 3: Build and push the backend image
       - name: Build and Push Server Image
         uses: docker/build-push-action@v4
         with:
@@ -31,54 +26,49 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/mern-server:latest
 
-      # Step 4: Build and push the frontend image
       - name: Build and Push Client Image
         uses: docker/build-push-action@v4
         with:
           context: ./client
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/mern-client:latest
-      
-      # Step 5: Deploy to AWS EC2
-      # This step securely connects to your EC2 instance via SSH and runs the deployment commands.
+
       - name: 🚀 Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
-        host: ${{ secrets.EC2_HOST_DNS }}
-        username: ${{ secrets.EC2_USERNAME }}  # Usually 'ubuntu' or 'ec2-user'
-        key: ${{ secrets.EC2_SSH_KEY }}        # Private SSH key
-        script: |
-          echo "🔗 Connecting to EC2 instance..."
-          echo "➡️ Navigating to app directory..."
-          ls
-          cd /home/ubuntu/
-          ls
-          echo "📂 Current directory contents:"
-          echo "🧹 Removing old Exercise_Tracker directory..."
-          rm -rf Exercise_Tracker
+          host: ${{ secrets.EC2_HOST_DNS }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "🔗 Connecting to EC2 instance..."
+            echo "➡️ Navigating to app directory..."
+            cd /home/ubuntu/
+            echo "📂 Current directory contents:"
+            ls
 
-          echo "⬇️ Cloning Exercise_Tracker from GitHub..."
-          git clone https://github.com/jaysisharma/Exercise_Tracker.git
+            echo "🧹 Removing old Exercise_Tracker directory..."
+            rm -rf Exercise_Tracker
 
-          echo "📂 Moving into Exercise_Tracker directory..."
-          cd Exercise_Tracker
+            echo "⬇️ Cloning Exercise_Tracker from GitHub..."
+            git clone https://github.com/jaysisharma/Exercise_Tracker.git
 
-          echo "🔐 Writing .env file with ATLAS_URI..."
-          echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" > .env
+            echo "📂 Moving into Exercise_Tracker directory..."
+            cd Exercise_Tracker
 
-          echo "🐳 Pulling latest Docker images (if any)..."
-          docker-compose pull
+            echo "🔐 Writing .env file with ATLAS_URI..."
+            echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" > .env
 
-          echo "🛠️ Rebuilding and restarting Docker containers..."
-          docker-compose up -d --force-recreate
+            echo "🐳 Pulling latest Docker images (if any)..."
+            docker-compose pull
 
-          echo "🧼 Pruning unused Docker images to save space..."
-          docker image prune -f
+            echo "🛠️ Rebuilding and restarting Docker containers..."
+            docker-compose up -d --force-recreate
 
-          echo "✅ Deployment completed successfully."
+            echo "🧼 Pruning unused Docker images to save space..."
+            docker image prune -f
 
+            echo "✅ Deployment completed successfully."
 
-      # Step 6 (Bonus): Send Slack Notification
       - name: Slack Notification on Success
         if: success()
         uses: rtCamp/action-slack-notify@v2.2.0
