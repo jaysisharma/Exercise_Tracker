@@ -1,3 +1,4 @@
+// import mongoose to define the schema for the Exercise model
 const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
