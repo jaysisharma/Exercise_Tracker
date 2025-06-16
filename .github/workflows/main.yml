@@ -48,8 +48,7 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}  # Usually 'ubuntu' or 'ec2-user'
         key: ${{ secrets.EC2_SSH_KEY }}        # Private SSH key
         script: |
-          set -e  # Exit on any error
-          set -x  # Show each command in logs
+          echo "🔗 Connecting to EC2 instance..."
           echo "➡️ Navigating to app directory..."
           ls
           cd /home/ubuntu/
