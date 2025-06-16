@@ -3,8 +3,7 @@ version: '3.8'
 services:
   # The backend Node.js service
   server:
-    build:
-      context: ./server # Path to the backend Dockerfile
+    image: jaysisharma/mern-server:latest  
     container_name: mern_server
     restart: unless-stopped
     environment:
@@ -16,8 +15,7 @@ services:
 
   # The frontend React/NGINX service
   client:
-    build:
-      context: ./client # Path to the frontend Dockerfile
+    image: jaysisharma/mern-client:latest
     container_name: mern_client
     restart: unless-stopped
     ports:
