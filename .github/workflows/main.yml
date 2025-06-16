@@ -41,32 +41,42 @@ jobs:
       
       # Step 5: Deploy to AWS EC2
       # This step securely connects to your EC2 instance via SSH and runs the deployment commands.
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST_DNS }}
-          username: ${{ secrets.EC2_USERNAME }} # e.g., 'ubuntu' or 'ec2-user'
-          key: ${{ secrets.EC2_SSH_KEY }} # Your private SSH key
-          script: |
-            # Navigate to the app directory
-            cd /home/ubuntu/mern-app/
-            rm -rf  Exercise_Tracker
-            git clone https://github.com/jaysisharma/Exercise_Tracker.git
-            cd Exercise_Tracker
-            # Ensure Docker and Docker Compose are installed
-            echo "Deploying MERN app to EC2 instance..."
-            # Pass secrets as environment variables for Docker Compose
-            # This creates a .env file on the EC2 instance.
-            echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" > .env
+     - name: 🚀 Deploy to EC2
+  uses: appleboy/ssh-action@master
+  with:
+    host: ${{ secrets.EC2_HOST_DNS }}
+    username: ${{ secrets.EC2_USERNAME }}  # Usually 'ubuntu' or 'ec2-user'
+    key: ${{ secrets.EC2_SSH_KEY }}        # Private SSH key
+    script: |
+      set -e  # Exit on any error
+      set -x  # Show each command in logs
 
-            # Pull the latest images from Docker Hub
-            docker-compose pull
-            
-            # Stop and remove old containers, then start new ones in detached mode
-            docker-compose up -d --force-recreate
-            
-            # Optional: Clean up dangling images to save space
-            docker image prune -f
+      echo "➡️ Navigating to app directory..."
+      cd /home/ubuntu/mern-app/
+
+      echo "🧹 Removing old Exercise_Tracker directory..."
+      rm -rf Exercise_Tracker
+
+      echo "⬇️ Cloning Exercise_Tracker from GitHub..."
+      git clone https://github.com/jaysisharma/Exercise_Tracker.git
+
+      echo "📂 Moving into Exercise_Tracker directory..."
+      cd Exercise_Tracker
+
+      echo "🔐 Writing .env file with ATLAS_URI..."
+      echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" > .env
+
+      echo "🐳 Pulling latest Docker images (if any)..."
+      docker-compose pull
+
+      echo "🛠️ Rebuilding and restarting Docker containers..."
+      docker-compose up -d --force-recreate
+
+      echo "🧼 Pruning unused Docker images to save space..."
+      docker image prune -f
+
+      echo "✅ Deployment completed successfully."
+
 
       # Step 6 (Bonus): Send Slack Notification
       - name: Slack Notification on Success
