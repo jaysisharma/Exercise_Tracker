@@ -4,33 +4,34 @@ services:
   # The backend Node.js service
   server:
     build:
-      context: ./server # Path to the backend Dockerfile
+      context: ./server
     container_name: mern_server
     restart: unless-stopped
     environment:
-      # Pass environment variables to the container.
-      # Use a .env file at the root of your project for these values.
       - ATLAS_URI=${ATLAS_URI}
+      - PORT=5000
+    # No 'ports' section is needed here for the server to be reached by the client.
+    # The containers will communicate over the Docker network.
+    # Exposing the port is only necessary if you want to access the API directly from the host.
+    ports:
+      - "5000:5000" # Optional: for direct API testing from your machine
     networks:
       - mern-app-network
 
   # The frontend React/NGINX service
   client:
     build:
-      context: ./client # Path to the frontend Dockerfile
+      context: ./client
     container_name: mern_client
     restart: unless-stopped
     ports:
-      # Map port 80 of the host to port 80 of the container.
-      # This makes the frontend accessible via the EC2 instance's IP address.
+      # Map port 80 of the host to port 80 of the container
       - "80:80"
     depends_on:
-      - server # Ensures the backend starts before the frontend
+      - server
     networks:
       - mern-app-network
 
-# Define the network that allows containers to communicate with each other.
 networks:
   mern-app-network:
     driver: bridge
-
