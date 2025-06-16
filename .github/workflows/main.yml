@@ -50,7 +50,7 @@ jobs:
           script: |
             # Navigate to the app directory
             cd /home/ubuntu/mern-app 
-            
+            echo "Deploying MERN app to EC2 instance..."
             # Pass secrets as environment variables for Docker Compose
             # This creates a .env file on the EC2 instance.
             echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" > .env
