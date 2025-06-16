@@ -52,7 +52,7 @@ jobs:
           set -x  # Show each command in logs
           echo "➡️ Navigating to app directory..."
           ls
-          cd /home/ubuntu/mern-app/
+          cd /home/ubuntu/
           ls
           echo "📂 Current directory contents:"
           echo "🧹 Removing old Exercise_Tracker directory..."
