@@ -20,6 +20,8 @@ connection.once('open', () => {
 const exercisesRouter = require('./routes/exercises');
 const usersRouter = require('./routes/users');
 
+// Use the routers for handling requests
+
 app.use('/exercises', exercisesRouter);
 app.use('/users', usersRouter);
 
