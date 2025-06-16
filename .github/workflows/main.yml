@@ -49,7 +49,10 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }} # Your private SSH key
           script: |
             # Navigate to the app directory
-            cd /home/ubuntu/mern-app/Exercise_Tracker
+            cd /home/ubuntu/mern-app/
+            rm -rf  Exercise_Tracker
+            git clone https://github.com/jaysisharma/Exercise_Tracker.git
+            cd Exercise_Tracker
             # Ensure Docker and Docker Compose are installed
             echo "Deploying MERN app to EC2 instance..."
             # Pass secrets as environment variables for Docker Compose
