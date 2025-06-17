@@ -40,44 +40,34 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "🔗 Connecting to EC2 instance..."
-            cd /home/ubuntu/
+            echo "🔗 Connecting to EC2..."
 
-            echo "🧹 Removing old Exercise_Tracker directory..."
-            rm -rf Exercise_Tracker
+            cd /home/ubuntu
 
-            echo "⬇️ Cloning Exercise_Tracker from GitHub..."
-            git clone https://github.com/jaysisharma/Exercise_Tracker.git
+            echo "📁 Creating unique deployment folder..."
+            timestamp=$(date +%s)
+            deploy_dir="Exercise_Tracker_$timestamp"
+            git clone https://github.com/jaysisharma/Exercise_Tracker.git "$deploy_dir"
 
-            cd Exercise_Tracker
+            cd "$deploy_dir"
 
-            echo "🔐 Writing .env file..."
-            cd server
-            echo "NODE_ENV=production" > .env
-            echo "PORT=5000" >> .env
-            echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" > .env
-            cd ..
-            echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" > .env
-
-            echo "DOCKER_HUB_ACCESS_TOKEN=\${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" >> .env
-            echo "DOCKER_HUB_USERNAME=\${{ secrets.DOCKER_HUB_USERNAME }}" >> .env
-
-            echo "🛑 Stopping and removing containers, images, volumes, and orphans..."
-            docker compose down --rmi all --volumes --remove-orphans
-
-            echo "🐳 Logging in to Docker Hub..."
-            echo "\${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "\${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+            echo "🔐 Writing .env files..."
+            echo "NODE_ENV=production" > server/.env
+            echo "PORT=5000" >> server/.env
+            echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" >> server/.env
 
             echo "📦 Pulling latest Docker images..."
+            echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
             docker compose pull
 
-            echo "🚀 Rebuilding and restarting containers..."
+            echo "🚀 Starting new containers..."
             docker compose up -d --force-recreate
 
-            echo "🧼 Pruning unused Docker images to save space...."
-            docker image prune -f
+            echo "🧼 Cleaning up old deployments (keeping latest 2)..."
+            cd /home/ubuntu
+            ls -dt Exercise_Tracker_* | tail -n +3 | xargs rm -rf || echo "Nothing to clean"
 
-            echo "✅ Deployment completed successfully."
+            echo "✅ Deployment finished successfully."
 
       - name: Slack Notification on Success
         if: success()
@@ -88,7 +78,7 @@ jobs:
           SLACK_ICON_EMOJI: ":rocket:"
           SLACK_COLOR: "good"
           SLACK_TITLE: "Deployment Successful! :white_check_mark:"
-          SLACK_MESSAGE: "The latest version of the MERN app has been deployed to production."
+          SLACK_MESSAGE: "✅ MERN App deployed successfully to EC2."
 
       - name: Slack Notification on Failure
         if: failure()
@@ -99,4 +89,4 @@ jobs:
           SLACK_ICON_EMOJI: ":x:"
           SLACK_COLOR: "danger"
           SLACK_TITLE: "Deployment Failed! :red_circle:"
-          SLACK_MESSAGE: "The deployment failed. Please check the GitHub Actions logs for details."
+          SLACK_MESSAGE: "❌ Deployment failed. Please check GitHub Actions logs."
