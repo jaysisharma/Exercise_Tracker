@@ -66,7 +66,6 @@ jobs:
             echo "🧼 Cleaning up previous containers..."
             old_port=$((5000 + 5001 - new_port))
             docker ps -q --filter "publish=$old_port" | xargs -r docker rm -f
-
             echo "✅ Deployment completed with zero downtime on port $new_port"
 
       - name: Slack Notification on Success
