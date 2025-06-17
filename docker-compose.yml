@@ -59,7 +59,7 @@ jobs:
             docker-compose down --rmi all --volumes --remove-orphans
 
             echo "🐳 Logging in to Docker Hub..."
-            echo "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+            echo "docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" 
 
             echo "📦 Pulling latest Docker images..."
             docker-compose pull
