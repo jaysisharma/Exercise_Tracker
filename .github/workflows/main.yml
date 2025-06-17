@@ -62,7 +62,7 @@ jobs:
             sed "s/__SERVER_PORT__/$new_port/" nginx/backend.conf.template > nginx/backend.conf
             sudo cp nginx/backend.conf /etc/nginx/conf.d/backend.conf
             sudo nginx -t
-            sudo systemctl reload nginx
+            sudo systemctl reload nginx.service
 
             echo "🧼 Cleaning up previous containers..."
             old_port=$((5000 + 5001 - new_port))
