@@ -13,7 +13,7 @@ function EditExercise() {
     const { id } = useParams();
 
     useEffect(() => {
-        axios.get('http://localhost:5000/exercises/'+id)
+        axios.get('http://54.224.96.96:5000/exercises/'+id)
             .then(response => {
                 setUsername(response.data.username);
                 setDescription(response.data.description);
@@ -22,7 +22,7 @@ function EditExercise() {
             })
             .catch(error => console.log(error));
 
-        axios.get('http://localhost:5000/users/')
+        axios.get('http://54.224.96.96:5000/users/')
             .then(response => {
                 if (response.data.length > 0) {
                     setUsers(response.data.map(user => user.username));
@@ -44,7 +44,7 @@ function EditExercise() {
             duration: duration,
             date: date
         };
-        axios.post('http://localhost:5000/exercises/update/' + id, exercise)
+        axios.post('http://54.224.96.96:5000/exercises/update/' + id, exercise)
             .then(res => console.log(res.data));
         window.location = '/';
     }

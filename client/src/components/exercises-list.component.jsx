@@ -18,7 +18,7 @@ function ExercisesList() {
   const [exercises, setExercises] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/exercises/')
+    axios.get('http://54.224.96.96:5000/exercises/')
       .then(response => {
         setExercises(response.data);
       })
@@ -28,7 +28,7 @@ function ExercisesList() {
   }, []);
 
   function deleteExercise(id) {
-    axios.delete('http://localhost:5000/exercises/'+id)
+    axios.delete('http://54.224.96.96:5000/exercises/'+id)
       .then(res => console.log(res.data));
     
     setExercises(exercises.filter(el => el._id !== id));

@@ -31,7 +31,7 @@ function CreateUser() {
       username: username
     };
 
-    axios.post('http://localhost:5000/users/add', user)
+    axios.post('http://54.224.96.96:5000/users/add', user)
       .then(res => {
         console.log(res.data);
         setMessage(`Success! User "${username}" has been created.`);
