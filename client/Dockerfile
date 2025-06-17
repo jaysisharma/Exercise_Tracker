@@ -34,5 +34,5 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # This file will configure NGINX to serve the React app and proxy API requests.
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose port 80 for the NGINX server
+# Expose port 4000 for the NGINX server
 EXPOSE 4000
