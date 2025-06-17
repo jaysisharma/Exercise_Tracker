@@ -57,7 +57,7 @@ jobs:
             echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" >> .env
 
             echo "📦 Pulling latest Docker images..."
-            echo "docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" 
+            echo "docker login -u ${{ secrets.DOCKER_HUB_USERNAME }}" 
             docker compose pull
 
             echo "🚀 Starting new containers..."
