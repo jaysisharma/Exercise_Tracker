@@ -18,11 +18,16 @@ app.use(express.json());
 
 console.log("Connecting to MongoDB...", process.env.ATLAS_URI);
 const uri = process.env.ATLAS_URI;
-mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+try {
+  mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 const connection = mongoose.connection;
 connection.once('open', () => {
   console.log("MongoDB database connection established successfully");
 })
+} catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+  
+}
 
 // Import the routers for handling requests
 const exercisesRouter = require('./routes/exercises');
