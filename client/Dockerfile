@@ -32,7 +32,9 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 # Copy the custom NGINX configuration file
 # This file will configure NGINX to serve the React app and proxy API requests.
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 
-# Expose port 4000 for the NGINX server
+
 EXPOSE 4000
+
+CMD ["sh", "-c", "envsubst '$$SERVER_PORT' < /etc/nginx/templates/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
