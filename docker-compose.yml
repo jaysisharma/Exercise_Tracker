@@ -18,7 +18,7 @@ services:
       context: ./server
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "${SERVER_PORT}:${SERVER_PORT}"
     restart: always
     environment:
       - NODE_ENV=production

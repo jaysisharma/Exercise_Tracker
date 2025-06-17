@@ -33,41 +33,41 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_HUB_USERNAME }}/mern-client:latest
 
-      - name: 🚀 Deploy to EC2
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST_DNS }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "🔗 Connecting to EC2..."
-
-            cd /home/ubuntu
-
-            echo "📁 Creating unique deployment folder..."
             timestamp=$(date +%s)
             deploy_dir="Exercise_Tracker_$timestamp"
             git clone https://github.com/jaysisharma/Exercise_Tracker.git "$deploy_dir"
-
             cd "$deploy_dir"
 
-            echo "🔐 Writing .env files..."
-            echo "NODE_ENV=production" > .env
-            echo "PORT=5000" >> .env
+            # Set new port (can alternate between 5000 and 5001)
+            if lsof -i :5000 >/dev/null; then
+              new_port=5001
+            else
+              new_port=5000
+            fi
+
+            echo "SERVER_PORT=$new_port" > .env
             echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" >> .env
 
-            echo "📦 Pulling latest Docker images..."
-            echo "docker login -u ${{ secrets.DOCKER_HUB_USERNAME }}" 
             docker compose pull
-
-            echo "🚀 Starting new containers..."
             docker compose up -d --force-recreate
 
-            echo "🧼 Cleaning up old deployments (keeping latest 2)..."
-            cd /home/ubuntu
-            ls -dt Exercise_Tracker_* | tail -n +3 | xargs rm -rf || echo "Nothing to clean"
+            # Update Nginx config to use new port
+            sed "s/__SERVER_PORT__/$new_port/" nginx/backend.conf.template > nginx/backend.conf
+            sudo cp nginx/backend.conf /etc/nginx/conf.d/backend.conf
+            sudo systemctl reload nginx
 
-            echo "✅ Deployment finished successfully."
+            echo "🧼 Cleaning up previous containers..."
+            old_port=$((5000 + 5001 - new_port))
+            docker ps -q --filter "publish=$old_port" | xargs -r docker rm -f
+
+            echo "✅ Deployment completed with zero downtime on port $new_port"
 
       - name: Slack Notification on Success
         if: success()
