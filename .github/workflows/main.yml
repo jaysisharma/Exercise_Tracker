@@ -41,10 +41,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "🔗 Connecting to EC2 instance..."
-            echo "➡️ Navigating to app directory..."
             cd /home/ubuntu/
-            echo "📂 Current directory contents:"
-            ls
 
             echo "🧹 Removing old Exercise_Tracker directory..."
             rm -rf Exercise_Tracker
@@ -52,22 +49,26 @@ jobs:
             echo "⬇️ Cloning Exercise_Tracker from GitHub..."
             git clone https://github.com/jaysisharma/Exercise_Tracker.git
 
-            echo "📂 Moving into Exercise_Tracker directory..."
             cd Exercise_Tracker
 
-            echo "🔐 Writing .env file with ATLAS_URI..."
-            echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" > .env
-            echo "DOCKER_HUB_ACCESS_TOKEN=${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" > .env
-            echo "DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}" > .env
+            echo "🔐 Writing .env file..."
+            echo "ATLAS_URI=\${{ secrets.ATLAS_URI }}" > .env
+            echo "DOCKER_HUB_ACCESS_TOKEN=\${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" >> .env
+            echo "DOCKER_HUB_USERNAME=\${{ secrets.DOCKER_HUB_USERNAME }}" >> .env
 
+            echo "🛑 Stopping and removing containers, images, volumes, and orphans..."
+            docker compose down --rmi all --volumes --remove-orphans
 
-            echo "🐳 Pulling latest Docker images (if any)..."
-            docker-compose pull
+            echo "🐳 Logging in to Docker Hub..."
+            echo "\${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" | docker login -u "\${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
-            echo "🛠️ Rebuilding and restarting Docker containers..."
-            docker-compose up -d --force-recreate
+            echo "📦 Pulling latest Docker images..."
+            docker compose pull
 
-            echo "🧼 Pruning unused Docker images to save space..."
+            echo "🚀 Rebuilding and restarting containers..."
+            docker compose up -d --force-recreate
+
+            echo "🧼 Pruning unused Docker images to save space...."
             docker image prune -f
 
             echo "✅ Deployment completed successfully."

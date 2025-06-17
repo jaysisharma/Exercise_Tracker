@@ -1,3 +1,6 @@
+
+#server/Dockerfile
+
 # --- Base Stage ---
 # Use an official Node.js runtime as a parent image.
 # Using a specific version ensures consistency.
