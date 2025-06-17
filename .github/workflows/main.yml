@@ -59,8 +59,8 @@ jobs:
             docker compose up -d --force-recreate
 
             # Update Nginx config to use new port
-            sed "s/__SERVER_PORT__/$new_port/" nginx/backend.conf.template > nginx/backend.conf
-            sudo cp nginx/backend.conf /etc/nginx/conf.d/backend.conf
+            sed "s/__SERVER_PORT__/$new_port/" nginx/nginx.conf.template > nginx/nginx.conf
+            sudo cp nginx/nginx.conf /etc/nginx/conf.d/nginx.conf
             sudo nginx -t
             sudo systemctl reload nginx.service
 
