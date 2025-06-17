@@ -57,6 +57,9 @@ jobs:
 
             echo "🔐 Writing .env file with ATLAS_URI..."
             echo "ATLAS_URI=${{ secrets.ATLAS_URI }}" > .env
+            echo "DOCKER_HUB_ACCESS_TOKEN=${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}" > .env
+            echo "DOCKER_HUB_USERNAME=${{ secrets.DOCKER_HUB_USERNAME }}" > .env
+
 
             echo "🐳 Pulling latest Docker images (if any)..."
             docker-compose pull
