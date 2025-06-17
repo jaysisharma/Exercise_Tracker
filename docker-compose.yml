@@ -45,7 +45,7 @@ jobs:
 
             echo "🧹 Removing old Exercise_Tracker directory..."
             rm -rf Exercise_Tracker
-
+            docker compose version
             echo "⬇️ Cloning Exercise_Tracker from GitHub..."
             git clone https://github.com/jaysisharma/Exercise_Tracker.git
 
