@@ -66,7 +66,7 @@ jobs:
             echo "🚀 Rebuilding and restarting containers..."
             docker-compose up -d --force-recreate
 
-            echo "🧼 Pruning unused Docker images to save space..."
+            echo "🧼 Pruning unused Docker images to save space...."
             docker image prune -f
 
             echo "✅ Deployment completed successfully."
